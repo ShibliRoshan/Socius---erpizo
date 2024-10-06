@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="payment_token_form_cardpointe" model="ir.ui.view">
+        <field name="name">Cardpointe Token Form</field>
+        <field name="model">payment.token</field>
+        <field name="inherit_id" ref="payment.payment_token_form"/>
+        <field name="arch" type="xml">
+            <group name="general_information" position="inside">
+                <field name="payment_mode" invisible="1"/>
+                <field name="card_number" invisible="1"/>
+                <field name="expyear" invisible="1"/>
+                <field name="cvv" invisible="1"/>
+                <field name="routing_number" invisible="1"/>
+                <field name="cardpointe_ret_reference"/>
+                <field name="temp_charge_refunded"/>
+            </group>
+        </field>
+    </record>
+
+
+
+</odoo>

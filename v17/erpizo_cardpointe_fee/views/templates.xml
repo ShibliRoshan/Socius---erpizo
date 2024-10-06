@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="inherit_redirect_form" inherit_id="erpizo_cardpointe.inline_form">
+        <xpath expr="//input[@id='payment_ach']" position="before">
+            <t t-set="provider" t-value="request.env['payment.provider'].sudo().search([('code', '=', 'cardpointe')])"/>
+            <t t-if="provider.sudo().is_payment_fee">
+                <div id="fee_badge" class="badge rounded-pill text-bg-info ms-1">
+                    <span t-esc="provider.sudo().fee_percentage *100"/>
+                    <span>%</span>
+                </div>
+            </t>
+        </xpath>
+    </template>
+
+    <template id="cardpointe_fee" inherit_id="website_sale.total"
+              name="Promo Code">
+        <xpath expr="//div[@id='cart_total']//table/tr[@id='order_total']"
+               position="replace">
+            <t t-set="provider" t-value="request.env['payment.provider'].sudo().search([('code', '=', 'cardpointe')])"/>
+            <t t-set="fee_percentage" t-value="provider.fee_percentage"/>
+            <t t-set="fee" t-value="website_sale_order.amount_total * fee_percentage"/>
+            <t t-set="amount_total" t-value="website_sale_order.amount_total + fee"/>
+            <div t-if="provider and provider.is_payment_fee and not request.httprequest.path.startswith('/shop/confirmation')">
+                <tr id="order_total_taxes" class="order_total_taxes_with_fee">
+                    <td colspan="2" class="text-muted border-0 ps-0 pt-0 pb-3"><span
+                            t-esc="provider.sudo().fee_percentage*100"/>% Fee
+                    </td>
+                    <td class="text-end border-0 pe-0 pt-0 pb-3">
+                        <span t-esc="fee"
+                              class="monetary_field"
+                              style="white-space: nowrap;"
+                              t-options="{'widget': 'monetary', 'display_currency': website_sale_order.currency_id}"/>
+                    </td>
+                </tr>
+
+                <tr id="order_total" class="border-top order_total_with_fee">
+                    <td colspan="2" class="border-0 ps-0 pt-3">
+                        <strong>Total:</strong>
+                    </td>
+                    <td class="text-end border-0 px-0 pt-3">
+                        <strong t-esc="amount_total" class="text-end p-0"
+                                t-options='{"widget": "monetary", "display_currency": website_sale_order.pricelist_id.currency_id}'/>
+                    </td>
+                </tr>
+                <t t-if="not request.httprequest.path.startswith('/shop/confirmation') and not request.httprequest.path.startswith('/shop/cart') ">
+                    <tr id="order_total" class="border-top order_total_with_fee_ach">
+                        <td colspan="2" class="border-0 ps-0 pt-3">
+                            <strong>Total</strong>
+                        </td>
+                        <td class="text-end border-0 px-0 pt-3">
+                            <strong t-field="website_sale_order.amount_total"
+                                    class="monetary_field text-end p-0"
+                                    t-options="{'widget': 'monetary', 'display_currency': website_sale_order.currency_id}"/>
+                        </td>
+                    </tr>
+                </t>
+                <tr class="order_total_without_fee" style="display:none;"/>
+
+            </div>
+            <div t-else="">
+                <tr class="order_total_taxes_with_fee" style="display:none;"/>
+                <tr class="order_total_with_fee" style="display:none;"/>
+                <tr class="order_total_with_fee_ach" style="display:none;"/>
+                <tr id="order_total" class="border-top order_total_without_fee">
+                    <td colspan="2" class="border-0 ps-0 pt-3">
+                        <strong>Total</strong>
+                    </td>
+                    <td class="text-end border-0 px-0 pt-3">
+                        <strong t-field="website_sale_order.amount_total"
+                                class="monetary_field text-end p-0"
+                                t-options="{'widget': 'monetary', 'display_currency': website_sale_order.currency_id}"/>
+                    </td>
+                </tr>
+            </div>
+        </xpath>
+    </template>
+
+    <template id="portal_invoice_page_inherit_erpizo" inherit_id="account.report_invoice_document">
+        <xpath expr="//div[@name='comment']" position="replace">
+            <t t-set="narration" t-value="o._compute_dynamic_content()"/>
+            <div class="text-muted mb-3" name="comment">
+                <p>
+                    <t t-esc="narration"/>
+                </p>
+            </div>
+        </xpath>
+    </template>
+
+    <template id="payment_form_inherit_erpizo" inherit_id="payment.form">
+        <xpath expr="//h4[@id='o_payment_tokens_heading']" position="replace">
+            <h4 id="o_payment_tokens_heading" class="fs-6 small text-uppercase fw-bolder">
+                Existing payment methods
+            </h4>
+        </xpath>
+        <xpath expr="//div[@id='o_payment_methods']/h4" position="replace">
+            <h4 class="fs-6 small text-uppercase fw-bolder">
+                <t t-if="not collapse_payment_methods">Choose a payment method</t>
+                <t t-else="">A new payment method</t>
+            </h4>
+        </xpath>
+        <xpath expr="//button[@name='o_payment_expand_button']" position="replace">
+            <button t-if="collapse_payment_methods"
+                    name="o_payment_expand_button"
+                    type="button"
+                    href="#o_payment_methods"
+                    class="btn btn-link"
+                    data-bs-toggle="collapse"
+            >
+                A new payment method
+                <i class="oi oi-arrow-down"/>
+            </button>
+        </xpath>
+    </template>
+
+    <template id="erpizo_payment_method_radio_inherit" inherit_id="payment.form">
+        <xpath expr="//div[@id='o_payment_methods']" position="replace">
+            <div id="o_payment_methods">
+                    <!-- === Header === -->
+                    <h4 class="fs-6 small text-uppercase fw-bolder">
+                        <t t-if="not collapse_payment_methods">Choose a payment method</t>
+                        <t t-else="">A new payment method</t>
+                    </h4>
+                    <!-- === Body === -->
+                    <ul class="list-group">
+                        <t t-foreach="payment_methods_sudo" t-as="pm_sudo">
+                            <li name="o_payment_option"
+                                class="list-group-item d-flex flex-column gap-2 py-3 o_outline"
+                            >
+                                <t t-call="payment.method_form">
+                                    <t t-set="is_selected"
+                                       t-value="pm_sudo.id == selected_method_id"
+                                    />
+                                </t>
+                            </li>
+                        </t>
+                    </ul>
+                </div>
+        </xpath>
+        <xpath expr="//button[@name='o_payment_expand_button']" position="attributes">
+            <attribute name="style">display: none !important</attribute>
+        </xpath>
+    </template>
+
+</odoo>

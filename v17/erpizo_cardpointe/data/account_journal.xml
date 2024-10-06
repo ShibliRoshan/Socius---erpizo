@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data  noupdate="1">
+        <record id="cardpointe_sales_journal" model="account.journal">
+            <field name="name">Erpizo Pay</field>
+            <field name="type">bank</field>
+            <field name="code">Cardpointe</field>
+        </record>
+
+        <record id="erpizo_cardpointe.payment_provider_cardpointe"
+                model="payment.provider">
+            <field name="journal_id"
+                   ref="erpizo_cardpointe.cardpointe_sales_journal"/>
+        </record>
+
+    </data>
+</odoo>

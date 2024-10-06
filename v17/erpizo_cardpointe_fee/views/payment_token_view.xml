@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="payment_token_form_cardpointe" model="ir.ui.view">
+        <field name="name">Cardpointe Token Form</field>
+        <field name="model">payment.token</field>
+        <field name="inherit_id" ref="payment.payment_token_form"/>
+        <field name="arch" type="xml">
+            <group name="general_information" position="inside">
+                <field name="add_fee" string="Add Token Fee"/>
+            </group>
+        </field>
+    </record>
+
+
+
+</odoo>

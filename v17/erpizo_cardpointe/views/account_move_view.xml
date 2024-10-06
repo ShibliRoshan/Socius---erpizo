@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_move_form" model="ir.ui.view">
+        <field name="name">account.move.form</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='fiscal_position_id']" position='after'>
+                <field name="cardpointe_ref"/>
+                <field name="cardpointe_refund_ref"/>
+            </xpath>
+
+            <button name='button_draft' position="after">
+
+                <button name="button_inquire_refund" class="btn-primary"
+                        type="object"
+                        string="Inquire Refund"
+                    invisible="invoice_payments_widget == False or state != 'posted' or move_type not in ('out_invoice')"/>
+                        />
+
+                <button name="button_cancel_payment"
+                        type="object"
+                        string="Cancel Payment"
+                    invisible="invoice_payments_widget == False or state != 'posted' or move_type not in ('out_invoice') or cancel_btn == False"/>
+                        />
+            </button>
+            <xpath expr="//field[@name='partner_id']" position='after'>
+            <field name="cancel_btn" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="transaction_form_inherit_cardpointe" model="ir.ui.view">
+        <field name="name">payment.transaction.form.inherit.cardpointe.payment</field>
+        <field name="model">payment.transaction</field>
+        <field name="inherit_id" ref="payment.payment_transaction_form"/>
+        <field name="arch" type="xml">
+            <field name="reference" position="after">
+                <field name="cardpointe_ref" invisible="0"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="payment_token_form_cardpointe" model="ir.ui.view">
+        <field name="name">Cardpointe Token Form</field>
+        <field name="model">payment.token</field>
+        <field name="inherit_id" ref="payment.payment_token_form"/>
+        <field name="arch" type="xml">
+            <group name="general_information" position="inside">
+                <field name="payment_mode" />
+                <field name="card_number" />
+                <field name="expyear" />
+                <field name="cvv" />
+                <field name="routing_number" />
+            </group>
+        </field>
+    </record>
+
+
+
+</odoo>

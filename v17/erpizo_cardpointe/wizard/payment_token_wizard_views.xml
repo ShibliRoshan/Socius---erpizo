@@ -1,0 +1,25 @@
+<!-- views/payment_token_wizard_view.xml -->
+<odoo>
+    <record id="view_payment_token_wizard_form" model="ir.ui.view">
+        <field name="name">payment.token.wizard.form</field>
+        <field name="model">payment.token.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Select Payment Tokens">
+                <group>
+                    <field name="token_id" widget="radio"/>
+                    <field name="partner_id" invisible="1"/>
+                </group>
+                <footer>
+                    <button string="Confirm" type="object" name="action_confirm" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <record id="action_payment_token_wizard" model="ir.actions.act_window">
+        <field name="name">Select Payment Tokens</field>
+        <field name="res_model">payment.token.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

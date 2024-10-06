@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="payment_method_cardpointee" model="payment.method">
+        <field name="name">Erpizo Pay</field>
+        <field name="code">cardpointe</field>
+        <field name="sequence">10</field>
+        <field name="active">True</field>
+        <field name="image" type="base64" file="erpizo_cardpointe/static/description/icon.png"/>
+        <field name="support_tokenization">True</field>
+        <field name="support_express_checkout">False</field>
+        <field name="support_refund"></field>
+    </record>
+
+    <record id="payment_method_cardpointe" model="account.payment.method">
+        <field name="name">Erpizo Pay</field>
+        <field name="code">cardpointe</field>
+        <field name="payment_type">inbound</field>
+    </record>
+
+    <record id="payment_provider_cardpointe" model="payment.provider">
+        <field name="name">Erpizo Pay</field>
+        <field name="code">cardpointe</field>
+        <field name="module_id" ref="base.module_erpizo_cardpointe"/>
+        <field name="image_128" type="base64" file="erpizo_cardpointe/static/description/icon.png"/>
+        <field name="redirect_form_view_id" ref="erpizo_cardpointe.cardpointe_redirect_form"/>
+        <field name="support_tokenization">True</field>
+        <field name="show_allow_tokenization">True</field>
+        <field name="allow_tokenization">True</field>
+        <field name="allow_express_checkout">True</field>
+        <field name="inline_form_view_id" ref="erpizo_cardpointe.inline_form"/>
+        <field name="payment_method_ids"
+               eval="[Command.set([
+                         ref('erpizo_cardpointe.payment_method_cardpointee'),
+
+                     ])]"
+        />
+
+    </record>
+
+    <record id="cardpointe_sales_journal" model="account.journal">
+        <field name="name">Erpizo Pay</field>
+        <field name="type">bank</field>
+        <field name="code">Cardpointe</field>
+    </record>
+
+    <record id="erpizo_cardpointe.payment_provider_cardpointe"
+            model="payment.provider">
+        <field name="journal_id"
+               ref="erpizo_cardpointe.cardpointe_sales_journal"/>
+    </record>
+
+</odoo>

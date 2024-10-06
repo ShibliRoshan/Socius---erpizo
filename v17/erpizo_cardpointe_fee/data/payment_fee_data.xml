@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <data>
+
+        <record id="product_product_cardpointe_fee" model="product.product">
+            <field name="name">Erpizo Pay Fee</field>
+            <field name="default_code">Fee</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="list_price">0.0</field>
+            <field name="taxes_id" eval="[(5,)]"/>
+            <field name="property_account_income_id" ref="erpizo_cardpointe_fee.cardpointe_fee_account"/>
+        </record>
+
+        <record id="erpizo_cardpointe.payment_provider_cardpointe" model="payment.provider">
+            <field name="is_payment_fee">True</field>
+            <field name="payment_fee_product_id" ref="erpizo_cardpointe_fee.product_product_cardpointe_fee"/>
+        </record>
+    </data>
+</odoo>
