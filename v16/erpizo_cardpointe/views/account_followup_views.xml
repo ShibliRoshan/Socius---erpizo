@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="erpizo_cardpointe_account_followup_form" model="ir.ui.view">
+        <field name="name">customer.statements.followup.my</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="account_followup.customer_statements_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='unreconciled_aml_ids']" position="after">
+                <button string="Charge" name="action_cardpointe_charge"
+                        class="btn btn-secondary" type="object" />
+                 <field name="is_saved_token" invisible="1"/>
+            </xpath>
+            <xpath expr="//field[@name='unreconciled_aml_ids']//tree//field[@name='blocked']" position="after">
+                <field name="block_charge" string="Exclude from next charge cycle"
+                       optional="show" widget="boolean_toggle"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

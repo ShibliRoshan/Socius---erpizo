@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="inherit_redirect_form" inherit_id="erpizo_cardpointe.redirect_form">
+        <xpath expr="//input[@id='payment_ach']" position="before">
+            <t t-set="providers"
+               t-value="request.env['payment.provider'].sudo().search([('code', '=', 'cardpointe')])"/>
+            <t t-if="providers.sudo().is_payment_fee">
+                <div id="fee_badge" class="badge rounded-pill text-bg-info ms-1">
+                    <span t-esc="providers.sudo().fee_percentage *100"/><span>%</span>
+                </div>
+            </t>
+        </xpath>
+    </template>
+
+    <template id="cardpointe_fee" inherit_id="website_sale.total"
+              name="Promo Code">
+        <xpath expr="//div[@id='cart_total']//table/tr[@id='order_total']"
+               position="replace">
+            <t t-set="provider" t-value="request.env['payment.provider'].sudo().search([('code', '=', 'cardpointe')])"/>
+            <t t-set="fee_percentage" t-value="provider.fee_percentage"/>
+            <t t-set="fee" t-value="website_sale_order.amount_total * fee_percentage"/>
+            <t t-set="amount_total" t-value="website_sale_order.amount_total + fee"/>
+            <div t-if="providers and provider.id in providers.ids and provider.sudo().code == 'cardpointe' and provider.sudo().is_payment_fee == True">
+                <tr id="order_total_taxes" class="order_total_taxes_with_fee">
+                    <td class="text-end border-0 cardpointe_fee"><span t-esc="providers.sudo().fee_percentage*100"/>% Fee
+                    </td>
+                    <td class="text-xl-end border-0">
+                        <span t-esc="fee" class="monetary_field"
+                              style="white-space: nowrap;"
+                              t-options="{'widget': 'monetary', 'display_currency': website_sale_order.currency_id}"/>
+                    </td>
+                </tr>
+                <tr id="order_total" class="order_total_with_fee">
+                    <td class="text-end border-top border-bottom-0">
+                        <strong>Total:</strong>
+                    </td>
+                    <td class="text-xl-end border-top border-bottom-0">
+                        <strong t-esc="amount_total" class="monetary_field"
+                                t-options='{"widget": "monetary", "display_currency": website_sale_order.pricelist_id.currency_id}'/>
+                    </td>
+                </tr>
+                <t t-esc="request.httprequest.path"/>
+                <t t-if="not request.httprequest.path.startswith('/shop/confirmation')">
+                    <tr id="order_total" class="order_total_with_fee_ach">
+                        <td class="text-end border-top border-bottom-0">
+                            <strong>Total:</strong>
+                        </td>
+                        <td class="text-xl-end border-top border-bottom-0">
+                            <strong t-field="website_sale_order.amount_total" class="monetary_field"
+                                    t-options='{"widget": "monetary", "display_currency": website_sale_order.pricelist_id.currency_id}'/>
+                        </td>
+                    </tr>
+                </t>
+            </div>
+            <div t-else="">
+                <tr id="order_total" class="order_total_without_fee">
+                    <td class="text-end border-top border-bottom-0">
+                        <strong>Total:</strong>
+                    </td>
+                    <td class="text-xl-end border-top border-bottom-0">
+                        <strong t-field="website_sale_order.amount_total" class="monetary_field"
+                                t-options='{"widget": "monetary", "display_currency": website_sale_order.pricelist_id.currency_id}'/>
+                    </td>
+                </tr>
+            </div>
+        </xpath>
+    </template>
+
+    <template id="portal_invoice_page_inherit_erpizo" inherit_id="account.report_invoice_document">
+        <xpath expr="//div[@name='comment']" position="replace">
+            <t t-set="narration" t-value="o._compute_dynamic_content()"/>
+            <div class="text-muted mb-3" name="comment" >
+                <p>
+                    <t t-esc="narration"/>
+                </p>
+            </div>
+        </xpath>
+    </template>
+
+</odoo>

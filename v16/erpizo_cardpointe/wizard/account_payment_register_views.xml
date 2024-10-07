@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_account_reg_payment_form_cardpointe" model="ir.ui.view">
+            <field name="name">account.payment.register.form.inherit.cardpointe</field>
+            <field name="model">account.payment.register</field>
+            <field name="inherit_id" ref="account.view_account_payment_register_form"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="//group" position="after">
+                        <field name="payment_code" invisible="1"/>
+                        <group name="credit_card_fields" string="Payment Mode"
+                               attrs="{'invisible': [('payment_code', '!=', 'cardpointe')]}">
+                            <field name="cardpointe_payment_mode"
+                                   class="o_light_label" widget="radio"
+                                   options="{'horizontal': true}"/>
+                            <div name="card_payment_fields"
+                                 attrs="{'invisible': [('cardpointe_payment_mode', '!=', 'card')]}">
+                                <label class="col-form-label" for="card_number"
+                                       style="font-weight: bold;">Card Number
+                                </label>
+
+                                <field name="card_number"
+                                       placeholder="Enter Card Number"
+                                       maxlength="19"
+                                       attrs="{'required': [('cardpointe_payment_mode', '=', 'card')]}"/>
+
+                                <div class="row">
+
+                                    <div class="col-4">
+                                        <label class="col-form-label"
+                                               for="expiry_date"
+                                               style="font-weight: bold;">
+                                            Expiry Date
+                                        </label>
+
+
+                                        <field name="expiry_date"
+                                               placeholder="MM" maxlength="2"
+                                               attrs="{'required': [('cardpointe_payment_mode', '=', 'card')]}"/>
+
+                                    </div>
+                                    <div class="col-4">
+                                        <label class="col-form-label"
+                                               for="expiry_year"
+                                               style="font-weight: bold;">
+                                            Expiry Year
+                                        </label>
+
+                                        <field name="expiry_year"
+                                               placeholder="YYYY" maxlength="4"
+                                               attrs="{'required': [('cardpointe_payment_mode', '=', 'card')]}"/>
+
+                                    </div>
+                                    <div class="col-4">
+                                        <label class="col-form-label"
+                                               for="card_cvv"
+                                               style="font-weight: bold;">CVV
+                                        </label>
+
+                                        <field name="card_cvv"
+                                               placeholder="CVV"
+                                               maxlength="4"
+                                               attrs="{'required': [('cardpointe_payment_mode', '=', 'card')]}"/>
+
+                                    </div>
+
+                                </div>
+                            </div>
+                            <group name="ach_payment_fields"
+                                   attrs="{'invisible': [('cardpointe_payment_mode', '!=', 'ach')]}">
+                                <field name="account_number"
+                                       attrs="{'required': [('cardpointe_payment_mode', '=', 'ach')]}"/>
+                                <field name="routing_number"
+                                       attrs="{'required': [('cardpointe_payment_mode', '=', 'ach')]}"/>
+                            </group>
+                        </group>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+    </data>
+</odoo>

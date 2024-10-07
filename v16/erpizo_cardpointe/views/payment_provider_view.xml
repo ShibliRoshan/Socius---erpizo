@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Cardpointe Redirect form view-->
+    <template id="redirect_form">
+        <form t-att-action="api_url" method="post">
+            <input type="hidden" name="success_url_address" t-att-value="return_url"/>
+            <input type="hidden" name="fail_url_address" t-att-value="return_url"/>
+            <input type="hidden" name="notify_url_address" t-att-value="return_url"/>
+            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+            <input type="hidden" name="reference" t-att-value="reference"/>
+        </form>
+    </template>
+    <!-- Inherited Payment Acquirer for Cardpointe-->
+    <record id="payment_provider_form_inherit" model="ir.ui.view">
+        <field name="name">Cardpointe Provider Form</field>
+        <field name="model">payment.provider</field>
+        <field name="inherit_id" ref="payment.payment_provider_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='provider_credentials']" position="inside">
+                <group attrs="{'invisible': [('code', '!=', 'cardpointe')]}">
+                    <field name="site" attrs="{'required':[('code', '=', 'cardpointe'), ('state', '!=', 'disabled')]}"/>
+                    <field name="merchant_id" attrs="{'required':[('code', '=', 'cardpointe'), ('state', '!=', 'disabled')]}"/>
+                    <field name="username" attrs="{'required':[('code', '=', 'cardpointe'), ('state', '!=', 'disabled')]}"/>
+                    <field name="password" attrs="{'required':[('code', '=', 'cardpointe'), ('state', '!=', 'disabled')]}" password="True"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

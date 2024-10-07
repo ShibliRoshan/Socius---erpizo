@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<odoo>
+    <record id="view_erpizo_auto_charge_form" model="ir.ui.view">
+        <field name="name">erpizo.auto.charge.form</field>
+        <field name="model">erpizo.auto.charge</field>
+        <field name="arch" type="xml">
+            <form string="Auto Charge">
+                <sheet>
+                    <group>
+                        <field name="max_charge_amount"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="view_erpizo_auto_charge_tree" model="ir.ui.view">
+        <field name="name">erpizo.auto.charge.tree</field>
+        <field name="model">erpizo.auto.charge</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="max_charge_amount"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_erpizo_auto_charge" model="ir.actions.act_window">
+        <field name="name">Auto Charge</field>
+        <field name="res_model">erpizo.auto.charge</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Add Auto Charge
+            </p>
+        </field>
+    </record>
+
+
+    <menuitem id="menu_erpizo_auto_charge"
+              parent="account.menu_finance_configuration"
+              sequence="0" action="action_erpizo_auto_charge"
+              name="Auto Charge"/>
+
+</odoo>

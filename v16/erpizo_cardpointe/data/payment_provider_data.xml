@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="payment_method_cardpointe" model="account.payment.method">
+        <field name="name">Erpizo Pay</field>
+        <field name="code">cardpointe</field>
+        <field name="payment_type">inbound</field>
+    </record>
+
+    <record id="erpizo_cardpointe.payment_provider_cardpointe" model="payment.provider">
+        <field name="name">Erpizo Pay</field>
+        <field name="code">cardpointe</field>
+        <field name="module_id" ref="base.module_erpizo_cardpointe"/>
+        <field name="image_128" type="base64" file="erpizo_cardpointe/static/description/icon.png"/>
+        <field name="redirect_form_view_id" ref="erpizo_cardpointe.redirect_form"/>
+        <field name="support_tokenization">True</field>
+        <field name="show_allow_tokenization">True</field>
+        <field name="allow_tokenization">True</field>
+        <field name="allow_express_checkout">True</field>
+        <field name="inline_form_view_id" ref="erpizo_cardpointe.redirect_form"/>
+        <field name="journal_id"
+                   ref="erpizo_cardpointe.cardpointe_sales_journal"/>
+
+        <field name="payment_icon_ids"
+               eval="[(6, 0, [
+                   ref('payment.payment_icon_cc_maestro'),
+                   ref('payment.payment_icon_cc_mastercard'),
+                   ref('payment.payment_icon_cc_discover'),
+                   ref('payment.payment_icon_cc_visa'),
+               ])]"/>
+
+    </record>
+
+</odoo>
+

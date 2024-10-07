@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_account_reg_payment_form_cardpointe" model="ir.ui.view">
+            <field name="name">account.payment.register.form.inherit.cardpointe</field>
+            <field name="model">account.payment.register</field>
+            <field name="inherit_id" ref="erpizo_cardpointe.view_account_reg_payment_form_cardpointe"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[@name='card_payment_fields']/div" position="after">
+                    <field name="is_fee_enabled" invisible="1"/>
+                    <group attrs="{'invisible': ['|', ('cardpointe_payment_mode', '!=', 'card'), ('is_fee_enabled', '=', False)]}">
+                        <field name="is_payment_fee" string="Add Fee" attrs="{'invisible': [('is_fee_enabled', '=', False)]}" />
+                    </group>
+                </xpath>
+                <field name="amount" position="after">
+                    <field name="fee_amount" string="Fee Amount" invisible="1"/>
+                </field>
+                <field name="payment_token_id" position="after">
+                    <field name="token_fee" string="Add Token Fee" readonly="0"/>
+                </field>
+            </field>
+        </record>
+
+        <record id="view_account_register_payment_form_cardpointe_fee" model="ir.ui.view">
+            <field name="name">account.payment.register.form.inherit.cardpointe.fee</field>
+            <field name="model">account.payment.register</field>
+            <field name="inherit_id" ref="account.view_account_payment_register_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[@name='card_payment_fields']/div" position="after">
+                    <field name="token_fee" invisible="1"/>
+                </xpath>
+
+                <xpath expr="//group[@name='group3']" position="replace">
+                        <group name="group3"
+                               attrs="{'invisible': ['|','|', ('token_fee', '=', True), ('is_payment_fee', '=', False), '|', ('payment_difference', '=', 0.0), '|', ('can_edit_wizard', '=', False), '&amp;', ('can_group_payments', '=', True), ('group_payment', '=', False)]}">
+                            <label for="payment_difference"/>
+                            <div>
+                                <field name="payment_difference"/>
+                                <field name="payment_difference_handling" widget="radio" nolabel="1"/>
+                                <div attrs="{'invisible': ['|', ('hide_writeoff_section', '=', True), ('payment_difference_handling','=','open')]}">
+                                    <label for="writeoff_account_id" string="Post Difference In" class="oe_edit_only"/>
+                                    <field name="writeoff_account_id"
+                                           string="Post Difference In"
+                                           options="{'no_create': True}"
+                                           attrs="{'required': [('payment_difference_handling', '=', 'reconcile'), ('early_payment_discount_mode', '=', False)]}"/>
+                                    <label for="writeoff_label" class="oe_edit_only" string="Label"/>
+                                    <field name="writeoff_label" attrs="{'required': [('payment_difference_handling', '=', 'reconcile')]}"/>
+                                </div>
+                            </div>
+                        </group>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>
+
+
+
