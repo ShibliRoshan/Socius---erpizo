@@ -15,9 +15,28 @@
                 <field name="cardpointe_ret_reference"/>
                 <field name="temp_charge_refunded"/>
             </group>
+            <field name="provider_id" position="after">
+                <field name="masked_provider_ref"/>
+            </field>
+<!--            <field name="provider_ref" position="attributes">-->
+<!--                <attribute name="invisible">1</attribute>-->
+<!--            </field>-->
         </field>
     </record>
 
+    <record id="payment_token_list_cardpointe" model="ir.ui.view">
+        <field name="name">Cardpointe Token List</field>
+        <field name="model">payment.token</field>
+        <field name="inherit_id" ref="payment.payment_token_list"/>
+        <field name="arch" type="xml">
+            <field name="provider_id" position="after">
+                <field name="masked_provider_ref"/>
+            </field>
+<!--            <field name="provider_ref" position="attributes">-->
+<!--                <attribute name="column_invisible">1</attribute>-->
+<!--            </field>-->
+        </field>
+    </record>
 
 
 </odoo>

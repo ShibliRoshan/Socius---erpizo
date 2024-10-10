@@ -91,12 +91,11 @@ class AccountPaymentRegister(models.TransientModel):
         provider = self.env['payment.provider'].sudo().search([('code', '=', 'cardpointe')], limit=1)
         fee_percentage = provider.fee_percentage if provider else 0.0
 
-        # so_origin = self.line_ids.invoice_origin
         for move_line in self.line_ids:
             so_origin = move_line.invoice_origin
             order_line = False
             if self.payment_method_code == 'cardpointe' and (self.is_payment_fee or self.token_fee):
-                valid_payment_conditions = (self.cardpointe_payment_mode != 'ach' or self.payment_token_id) and \
+                valid_payment_conditions = (self.cardpointe_payment_mode != 'ach' or self.payment_token_id.payment_mode != 'ach') and \
                                            provider.is_payment_fee
 
                 if valid_payment_conditions and so_origin:
@@ -112,7 +111,7 @@ class AccountPaymentRegister(models.TransientModel):
 
             move = move_line.move_id
             if move and self.payment_method_code == 'cardpointe' and (self.is_payment_fee or self.token_fee):
-                valid_payment_conditions = (self.cardpointe_payment_mode != 'ach' or self.payment_token_id) and \
+                valid_payment_conditions = (self.cardpointe_payment_mode != 'ach' or self.payment_token_id.payment_mode != 'ach') and \
                                             provider.is_payment_fee
                 if valid_payment_conditions:
                     move_line_data = {

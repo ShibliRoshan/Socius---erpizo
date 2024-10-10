@@ -67,10 +67,18 @@ class PaymentTransaction(models.Model):
 
     def _cardpointe_tokenize_from_data(self, notification_data):
         """Create a new token based on the feedback data."""
-        masked_number = (
-            "*" * (len(notification_data.get("token")) - 4)
-            + notification_data.get("token")[-4:]
-        )
+        mode = notification_data.get('payment_mode')
+        masked_number = False
+        if mode == 'card':
+            masked_number = (
+                "*" * (len(notification_data.get("token")) - 4)
+                + notification_data.get("token")[-4:]
+            )
+        else:
+            masked_number = (
+                    "*" * (len(notification_data.get("cc_number")) - 4)
+                    + notification_data.get("cc_number")[-4:]
+            )
         cc_expiry = notification_data.get("cc_expiry").replace(" ", "").replace("/", "") if notification_data.get(
             "cc_expiry") else None
         sudo_self = self.sudo()
@@ -78,17 +86,21 @@ class PaymentTransaction(models.Model):
             [("provider_id", "=", notification_data.get('acquirer_id')),
                 ("partner_id", "=", notification_data.get("partner_id")),
                 ("provider_ref", "=", notification_data.get("token"))])
-        if notification_data.get('tokenization_requested') and existing_token and notification_data.get("token"):
+        if notification_data.get('tokenization_requested') and existing_token:
             raise ValidationError(_("Payment method already saved.\n"
                                     "Please save another payment method"))
+        # payment_method_id = self.env["payment.method"].search([
+        #         ("code","=", notification_data.get("data").get("paymentMethodCode"),)] ).id if notification_data.get("data") else self.env["payment.method"].search([
+        #         ("code","=", notification_data.get("paymentMethodCode"),)] ).id
+
         token_data = {
             "payment_details": masked_number,
             "payment_method_id": self.env["payment.method"].search([
-                ("code","=", notification_data.get("data").get("paymentMethodCode"),)] ).id,
+                ("code","=", notification_data.get("paymentMethodCode"),)] ).id,
             "provider_id": notification_data.get("acquirer_id"),
             "partner_id": notification_data.get("partner_id"),
-            "provider_ref": notification_data.get("token"),
-            "card_number": notification_data.get("token") if notification_data.get("payment_mode") == "card" else notification_data.get("cc_number"),
+            "provider_ref": notification_data.get("token") if mode == "card" else notification_data.get("cc_number"),
+            "card_number": notification_data.get("token") if mode == "card" else notification_data.get("cc_number"),
             "payment_mode": notification_data.get("payment_mode"),
             "cvv": notification_data.get("cc_cvc"),
             "expyear": cc_expiry,
@@ -108,15 +120,27 @@ class PaymentTransaction(models.Model):
     def _cardpointe_tokenize_from_feedback_data(self, notification_data):
         """Create a new token based on the feedback data."""
         self.ensure_one()
-        masked_number = (
-            "*" * (len(notification_data.get("token")) - 4)
-            + notification_data.get("token")[-4:]
-        )
+        mode = notification_data.get("data").get('payment_mode')
+        masked_number = False
+        provider_ref = False
+        if mode == 'card':
+            masked_number = (
+                    "*" * (len(notification_data.get("data").get("token")) - 4)
+                    + notification_data.get("data").get("token")[-4:]
+            )
+            provider_ref = notification_data.get("data").get("token")
+        else:
+            masked_number = (
+                    "*" * (len(notification_data.get("data").get("cc_number")) - 4)
+                    + notification_data.get("data").get("cc_number")[-4:]
+            )
+            provider_ref = notification_data.get("data").get("cc_number")
+
         existing_token = self.env["payment.token"].search(
-            [("provider_id", "=", notification_data.get('acquirer_id')),
-                ("partner_id", "=", notification_data.get("partner_id")),
-                ("provider_ref", "=", notification_data.get("token"))])
-        if self.tokenize and existing_token and notification_data.get("data").get("token"):
+            [("provider_id", "=", notification_data.get("data").get('acquirer_id')),
+                ("partner_id", "=", notification_data.get("data").get("partner_id")),
+                ("provider_ref", "=", provider_ref)])
+        if self.tokenize and existing_token:
             raise ValidationError(_("Payment method already saved.\n"
                                     "Please save another payment method"))
 
@@ -126,7 +150,7 @@ class PaymentTransaction(models.Model):
                 ("code","=", notification_data.get("data").get("paymentMethodCode"),)] ).id,
             "provider_id": self.provider_id.id,
             "partner_id": self.partner_id.id,
-            "provider_ref": notification_data.get("data").get("token"),
+            "provider_ref": provider_ref,
             "card_number": notification_data.get("data").get("token"),
             "payment_mode": notification_data.get("data").get("payment_mode"),
             "cvv": notification_data.get("data").get("cc_cvc"),
@@ -134,7 +158,6 @@ class PaymentTransaction(models.Model):
             "routing_number": (notification_data.get("data").get
                                ("routing_number")),
         }
-
         token = self.env["payment.token"].create(token_data)
         self.write({"token_id": token.id, "tokenize": False})
         _logger.info(

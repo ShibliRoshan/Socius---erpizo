@@ -125,7 +125,7 @@ class CardpointeControllers(CardpointeController):
             "merchid": str(provider_id.merchant_id),
             "account": tokenized_account_number,
             "expiry": cc_expiry,
-            "amount": 0.00,
+            "amount": 0.01,
             "currency": "USD" or request.env.company.currency_id.name,
             "ecomind": "E",
             "tokenize": "Y",
@@ -149,7 +149,7 @@ class CardpointeControllers(CardpointeController):
         account_number = self._get_account_number(token_id)
         tokenized_account_number = self._get_tokenized_account_number(
             account_number, provider_id)
-        cc_expiry = token_id.expyear.replace(" ", "").replace("/", "")
+        cc_expiry = token_id.expyear.replace(" ", "").replace("/", "") if token_id.expyear else False
         payable_amount = float((process_values.get(
             "amount")) + float(process_values.get(
             "amount")) * fee_percentage) if provider_id.is_payment_fee else process_values.get(
@@ -219,14 +219,22 @@ class CardpointeControllers(CardpointeController):
 
     def _get_account_number(self, token_or_data):
         cc_number = token_or_data.card_number if hasattr(token_or_data,
-                                                         'card_number') else token_or_data.get(
-            "cc_number")
+                                                                 'card_number') else token_or_data.get("cc_number")
+
         routing_number = token_or_data.routing_number if hasattr(token_or_data,
                                                                  'routing_number') else token_or_data.get(
             "routing_number")
-        return f"{routing_number}/{cc_number}" if cc_number and routing_number else cc_number
+
+        if cc_number and routing_number:
+            return f"{routing_number}/{cc_number}"
+        elif cc_number:
+            return cc_number
+        else:
+            return f"{routing_number}/{token_or_data.provider_ref}" if token_or_data.provider_ref else False
+
 
     def _send_request(self, api_url, headers, payload, data):
+        provider_id = request.env['payment.provider'].sudo().search([('code', '=', 'cardpointe')], limit=1)
         try:
             _logger.info("URL:\n%s",
                          json.dumps(api_url, indent=4))
@@ -248,8 +256,10 @@ class CardpointeControllers(CardpointeController):
                         "landingRoute"):
                     data.update({"retref": json_data.get('retref')})
                     _logger.info(
-                        "Response of $0 charge processing with data:\n%s",
+                        "Response of $0.01 charge processing with data:\n%s",
                         json.dumps(json_data, indent=4))
+                    if data.get('payment_mode') == 'ach':
+                        self.refund_or_void_transaction(provider_id, json_data.get('retref'), 0.01)
                     request.env[
                         "payment.transaction"].sudo()._get_tx_from_notification_data(
                         "cardpointe", data)
@@ -264,7 +274,7 @@ class CardpointeControllers(CardpointeController):
                 _("The Payment service failed due to a connection error"))
 
     def _handle_error(self, error_text):
-        raise UserError(
+        raise ValidationError(
             _("The Payment service failed due to the following error: %s! Please ensure that the details are correct",
               error_text))
 
@@ -311,6 +321,103 @@ class CardpointeControllers(CardpointeController):
         if response.status_code == 200:
             return response.json().get("token", "")
         else:
+            response_data = response.json()
             raise UserError(
                 _("Tokenization failed with status code %s. Check the card",
                   response.text))
+
+    def refund_transaction(self, provider_id, retref, amount=0.01):
+        """Refunds a transaction by retref (reference)."""
+        refund_url_template = "https://{site}.cardconnect.com/cardconnect/rest/refund"
+        site = provider_id.site if provider_id.state == 'enabled' else f"{provider_id.site}-uat"
+        refund_url = refund_url_template.format(site=site)
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": self.basic_auth(provider_id.username, provider_id.password)
+        }
+
+        refund_payload = {
+            "merchid": str(provider_id.merchant_id),
+            "retref": retref,
+            "amount": "{:.2f}".format(amount),  # Refund the $0.01 charge
+        }
+
+        try:
+            _logger.info("Refund URL:\n%s", refund_url)
+            _logger.info("Refund Payload:\n%s", json.dumps(refund_payload, indent=4))
+
+            response = requests.post(refund_url, json=refund_payload, headers=headers)
+
+            if response.status_code == 200:
+                refund_response = response.json()
+                _logger.info("Refund Response:\n%s", json.dumps(refund_response, indent=4))
+                return refund_response  # Return the refund response for further handling
+            else:
+                _logger.error("Refund HTTP error: %s", response.status_code)
+                raise ValidationError(_("Refund failed with status code: %s", response.status_code))
+
+        except requests.exceptions.ConnectionError as e:
+            _logger.error("Refund connection error: %s", e)
+            raise UserError(_("The refund process failed due to a connection error"))
+
+    def void_transaction(self, provider_id, retref):
+        """Voids an unsettled transaction by retref (reference)."""
+        void_url_template = "https://{site}.cardconnect.com/cardconnect/rest/void"
+        site = provider_id.site if provider_id.state == 'enabled' else f"{provider_id.site}-uat"
+        void_url = void_url_template.format(site=site)
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": self.basic_auth(provider_id.username, provider_id.password)
+        }
+
+        void_payload = {
+            "merchid": str(provider_id.merchant_id),
+            "retref": retref,  # Transaction reference returned from the verification response
+            "amount":0.01
+        }
+
+        try:
+            _logger.info("Void URL:\n%s", void_url)
+            _logger.info("Void Payload:\n%s", json.dumps(void_payload, indent=4))
+
+            response = requests.post(void_url, json=void_payload, headers=headers)
+
+            if response.status_code == 200:
+                void_response = response.json()
+                _logger.info("Void Response:\n%s", json.dumps(void_response, indent=4))
+                return void_response  # Return the void response for further handling
+            else:
+                _logger.error("Void HTTP error: %s", response.status_code)
+                raise ValidationError(_("Void failed with status code: %s", response.status_code))
+
+        except requests.exceptions.ConnectionError as e:
+            _logger.error("Void connection error: %s", e)
+            raise UserError(_("The void process failed due to a connection error"))
+
+    def refund_or_void_transaction(self, provider_id, retref, amount=0.01):
+        """Tries to refund the transaction. If it's not settled, it will void it."""
+        try:
+            _logger.info("Attempting to refund or void the transaction...")
+
+            # Try refund first
+            refund_response = self.refund_transaction(provider_id, retref, amount)
+            if refund_response and refund_response.get("respstat") == "A":
+                _logger.info("Refund of $0.01 was successful.")
+                return  # Refund succeeded, exit function.
+            else:
+                _logger.warning("Refund failed with message: %s", refund_response.get("resptext", "Unknown reason"))
+                _logger.warning("Trying to void the transaction...")
+
+                # If refund fails, try voiding the unsettled transaction
+                void_response = self.void_transaction(provider_id, retref)
+                if void_response and void_response.get("respstat") == "A":
+                    _logger.info("Transaction void was successful.")
+                else:
+                    raise ValidationError(
+                        _("Void failed with error: %s", void_response.get("resptext", "Unknown reason")))
+
+        except Exception as e:
+            _logger.error("Error during refund or void process: %s", e)
+            raise UserError(_("The refund or void process failed."))

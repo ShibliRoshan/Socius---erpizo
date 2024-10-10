@@ -46,7 +46,7 @@ class PaymentTransaction(models.Model):
                     ),
                 ]
             )
-            if self.tokenize and existing_token and notification_data.get("data").get("token"):
+            if self.tokenize and existing_token:
                 raise ValidationError(_("Payment method already saved.\n"
                                         "Please save another payment method"))
             if (
@@ -56,7 +56,11 @@ class PaymentTransaction(models.Model):
             ):
                 self._cardpointe_tokenize_from_feedback_data(notification_data)
             if self.provider_id.is_payment_fee:
-                payment_mode = notification_data.get("data").get("payment_mode")
+                if notification_data.get("data").get("flow") == 'token':
+                    payment_mode = self.token_id.payment_mode
+                else:
+                    payment_mode = notification_data.get("data").get("payment_mode")
+
                 if self.sale_order_ids and payment_mode != 'ach':
                     for sale_order in self.sale_order_ids:
                         if existing_token or payment_mode != 'ach':
@@ -67,6 +71,7 @@ class PaymentTransaction(models.Model):
                                                    payment_fee_product_id.id),
                                     "qty_invoiced": 1,
                                     "price_unit": self.amount * fee_percentage,
+                                    "tax_id": False
                                 }
                             )
                             self.amount += self.amount * fee_percentage
@@ -105,6 +110,8 @@ class PaymentTransaction(models.Model):
 
             self._set_done()
             self.cardpointe_ref = notification_data.get("retref")
+            if self.token_id and not self.token_id.cardpointe_ret_reference:
+                self.token_id.cardpointe_ret_reference = notification_data.get("retref")
             return request.redirect("/payment/status")
         else:
             if status == 400:

@@ -16,6 +16,8 @@ class PaymentToken(models.Model):
 
     _inherit = "payment.token"
 
+    masked_provider_ref = fields.Char(compute="compute_masked_provider_ref",string="Provider Reference")
+
     cvv = fields.Char(
         "CVV",
         help="Stored only last four digit for re-use in " "next transaction",
@@ -28,7 +30,17 @@ class PaymentToken(models.Model):
     cardpointe_ret_reference = fields.Char("Cardpointe Retref", store=True)
     temp_charge_refunded = fields.Boolean(default=False, store=True,
                                           string="Charged Amount Refunded")
-    #
+
+    def compute_masked_provider_ref(self):
+       for rec in self:
+           if rec.provider_ref:
+               rec.masked_provider_ref = (
+                    "*" * (len(rec.provider_ref) - 4)
+                    + rec.provider_ref[-4:]
+                )
+           else:
+               rec.masked_provider_ref = False
+
     # def refund_token_amount(self):
     #     if not self.temp_charge_refunded:
     #         _logger.info(

@@ -208,11 +208,19 @@ class AccountPaymentRegister(models.TransientModel):
         routing_number = (
             self.routing_number or self.payment_token_id.routing_number
         )
-        account_number = (
-            f"{routing_number}/{cc_number}"
-            if routing_number and cc_number
-            else cc_number
-        )
+        account_number = False
+        if routing_number and cc_number:
+            account_number = f"{routing_number}/{cc_number}"
+        elif cc_number:
+            account_number = cc_number
+        else:
+            account_number = f"{routing_number}/{self.payment_token_id.provider_ref}" if self.payment_token_id.provider_ref else False
+        # account_number = (
+        #     f"{routing_number}/{cc_number}"
+        #     if routing_number and cc_number
+        #     elif cc_number:
+        #
+        # )
         tokenized_account_number = self._get_tokenized_account_number(
             account_number, provider_id
         )
