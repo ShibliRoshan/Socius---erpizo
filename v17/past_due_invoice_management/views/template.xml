@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+
+    <!-- Complete page of the sale_order -->
+    <template id="past_due_invoice_template" name="Past Due Invoice Button"
+              inherit_id="account_payment.portal_invoice_page_inherit_payment">
+        <xpath expr="//t[@t-call='portal.portal_record_sidebar']//div[hasclass('o_download_pdf')]" position="before">
+            <a t-if="invoice._has_to_be_paid()"
+               href="#"
+               class="btn btn-primary d-block mb-2"
+               data-bs-toggle="modal"
+               data-bs-target="#pay_with">
+                <i class="fa fa-fw fa-arrow-circle-right"/>
+                Pay Now + Due Invoice
+            </a>
+        </xpath>
+    </template>
+
+    <template id="past_due_payment_method_inherit" inherit_id="payment.form">
+        <xpath expr="//div[@id='o_payment_methods']" position="replace">
+            <t t-if="object.portal_due_invoices()">
+                <div class="due_invoices" style="border:3px grey solid; border-radius:10px; padding:10px;">
+                    <h4 class="fs-6 small text-uppercase fw-bolder">
+                        Past Due Invoices
+                    </h4>
+                    <!-- Table structure for past-due invoices -->
+                    <t t-call="portal.portal_table">
+           		<thead >
+           			<tr >
+           				<th>
+                            Invoice Number
+                        </th>
+                        <th>
+                            Invoice Date
+                        </th>
+                        <th>
+                            Invoice Due Date
+                        </th>
+                        <th>
+                            Total Amount
+                        </th>
+                        <th>
+                            Payment State
+                        </th>
+                        <th>
+                            State
+                        </th>
+           			</tr>
+           		</thead>
+            		<tbody>
+						<t t-set="total_amount" t-value="0.00"/>
+						<t t-foreach="object.portal_due_invoices()" t-as="invoice">
+                            <t t-set="total_amount" t-value="total_amount + invoice.amount_total_signed"/>
+							<tr>
+								<td><span t-field="invoice.name"/></td>
+								<td><span t-field="invoice.invoice_date"/></td>
+								<td><span t-field="invoice.invoice_date_due"/></td>
+								<td><span t-field="invoice.amount_total_signed"/></td>
+								<td><span t-field="invoice.payment_state"/></td>
+								<td><span t-field="invoice.state"/></td>
+							</tr>
+						</t>
+						<tr>
+							<td></td>
+							<td></td>
+							<td></td>
+							<td><strong><span>$ </span><span t-esc="'%.2f' % total_amount"/></strong></td>
+						</tr>
+					</tbody>
+
+            </t>
+
+                </div>
+            </t>
+
+            <div id="o_payment_methods">
+                <!-- === Header === -->
+                <h4 class="fs-6 small text-uppercase fw-bolder">
+                    <t t-if="not collapse_payment_methods">Choose a payment method</t>
+                    <t t-else="">A new payment method</t>
+                </h4>
+                <!-- === Body === -->
+                <ul class="list-group">
+                    <t t-foreach="payment_methods_sudo" t-as="pm_sudo">
+                        <li name="o_payment_option"
+                            class="list-group-item d-flex flex-column gap-2 py-3 o_outline"
+                        >
+                            <t t-call="payment.method_form">
+                                <t t-set="is_selected"
+                                   t-value="pm_sudo.id == selected_method_id"
+                                />
+                            </t>
+                        </li>
+                    </t>
+                </ul>
+            </div>
+        </xpath>
+        <xpath expr="//button[@name='o_payment_expand_button']" position="attributes">
+            <attribute name="style">display: none !important</attribute>
+        </xpath>
+    </template>
+</odoo>

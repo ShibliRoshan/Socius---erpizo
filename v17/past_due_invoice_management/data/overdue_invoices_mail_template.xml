@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="0">
+    <record id="past_due_invoice_email_template" model="mail.template">
+        <field name="name">Send Invoice With Overdue Invoices</field>
+        <field name="email_from">{{ object.move_id.user_id.email_formatted or object.move_id.company_id.email_formatted or object.move_id.user.email_formatted }}</field>
+        <field name="subject">{{ object.move_id.company_id.name or '' }}: Invoice (Ref {{object.move_id.name or ''}})</field>
+        <field name="email_to">{{ object.move_id.partner_id.email }}</field>
+        <field name="model_id" ref="past_due_invoice_management.model_past_due_invoice_wizard"/>
+
+        <field name="body_html">
+            <![CDATA[
+        <div style="margin: 0px; padding: 0px; font-family: Arial, sans-serif; color: #333;">
+            <p style="font-size: 14px; line-height: 20px; margin: 0px; padding: 0px;">
+                Hi&nbsp;<t t-if="object.move_id.partner_id">
+                    <t t-out="object.move_id.partner_id.name or ''">Brandon Freeman</t>
+                    (<t t-out="object.move_id.partner_id.name or ''">Azure Interior</t>),
+                </t>
+                <t t-else="">
+                    <t>Brandon Freeman</t>,
+                </t>
+            </p>
+
+            <p style="font-size: 14px; line-height: 20px;">
+                Here is your
+                <t t-if="object.move_id.name">
+                    invoice <strong t-out="object.move_id.name or ''">INV/2021/05/0005</strong>
+                </t>
+                <t t-else="">
+                    invoice
+                </t>
+                <t t-if="object.move_id.invoice_origin">
+                    (with reference: <t t-out="object.move_id.invoice_origin or ''">SUB003</t>)
+                </t>
+                amounting to <strong t-out="format_amount(object.move_id.amount_total, object.move_id.currency_id) or ''">$ 143,750.00</strong>
+                from <t t-out="object.move_id.company_id.name or ''">YourCompany</t>.
+            </p>
+
+            <t t-if="object.move_id.payment_state in ('paid', 'in_payment')">
+                <p style="font-size: 14px; line-height: 20px;">
+                    This invoice is already paid.
+                </p>
+            </t>
+            <t t-else="">
+                <p style="font-size: 14px; line-height: 20px;">
+                    Please remit payment at your earliest convenience.
+                </p>
+                <t t-if="object.move_id.payment_reference">
+                    <p style="font-size: 14px; line-height: 20px;">
+                        Please use the following communication for your payment:
+                        <strong t-out="object.move_id.payment_reference or ''">INV/2021/05/0005</strong>
+                        <t t-if="object.move_id.partner_bank_id">
+                            on the account <strong t-out="object.move_id.partner_bank_id.acc_number"></strong>.
+                        </t>
+                    </p>
+                </t>
+            </t>
+
+            <t t-if="hasattr(object.move_id, 'timesheet_count') and objectmove_id.timesheet_count">
+                <p style="font-size: 14px; line-height: 20px;">
+                    PS: You can review your timesheets
+                    <a t-att-href="'my/timesheets?search_in=invoice&amp;search=%s' % object.move_id.name" style="color: #1d70b8; text-decoration: none;">
+                        from the portal
+                    </a>.
+                </p>
+            </t>
+
+            <p style="font-size: 14px; line-height: 20px;">
+                Furthermore, it has come to our attention that you have an outstanding balance of
+                <strong t-out="format_amount(object.move_id.amount_total, object.move_id.currency_id) or ''"></strong>.
+                <br>
+                We kindly request that you take the necessary action to settle this amount as soon as possible using the link sent with this email.
+                <br>
+                If you have already made the payment after receiving this message, please disregard it.
+                <br>
+                Our accounting department is available if you require any assistance or have any questions.
+            </p>
+
+            <p>Please find the list of past due invoices below:</p>
+
+        <table border="1" style="width:100%; border-collapse: collapse;">
+            <thead border="1">
+                <tr>
+                    <th>Invoice Number</th>
+                    <th>Due Date</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <t t-foreach="object.invoice_ids" t-as="invoice">
+                    <tr>
+                        <td><t t-esc="invoice.name"/></td>
+                        <td><t t-esc="invoice.invoice_date_due"/></td>
+                        <td><t t-esc="invoice.amount_total"/></td>
+                    </tr>
+                </t>
+            </tbody>
+        </table>
+
+            <p style="font-size: 14px; line-height: 20px;">
+                Thank you for your cooperation.
+                <br>
+                Sincerely,
+            </p>
+
+            <t t-if="not is_html_empty(object.move_id.invoice_user_id.signature)">
+                <p style="font-size: 14px; line-height: 20px;">
+                    <t t-out="object.move_id.invoice_user_id.signature or ''">Mitchell Admin</t>
+                </p>
+            </t>
+        </div>
+        ]]>
+        </field>
+    </record>
+</odoo>
